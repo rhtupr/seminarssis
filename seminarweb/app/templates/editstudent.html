@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="w3-container w3-padding-32" id="edit_student_form">
+  <form method="POST" action="/students/edit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Upload Image Section -->
+    <div id="student_image_container" class="form-group student_image_container">
+        <img id="student_info_image" src="{{ image_url or "https://res.cloudinary.com/dxsfyb8kj/image/upload/v1701792008/ssis/0d37e2266c3a6983fdeddbb4e2eafa87_tzglpn.jpg" }}" alt="{{ id }}">
+    </div>
+    <div class="form-group  text-center">
+        <input id="image_url" type="text" name="image_url" value="{{ image_url or "https://res.cloudinary.com/dxsfyb8kj/image/upload/v1701792008/ssis/0d37e2266c3a6983fdeddbb4e2eafa87_tzglpn.jpg" }}" hidden>
+        <input type="file" id="file-input" accept="image/*" hidden>
+        <button id="file-button" type="button" class="btn btn-primary col-md-6 mx-auto" style="margin-top: 10px;">Upload Image</button>
+        <p> Accepted Image Type: JPG, JPEG, PNG; Maximum Size: 1MB</p>
+    </div>
+
+    <!-- Student Details Section -->
+    <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Edit Student Information</h3>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="student_id" value="{{ student_id }}">
+      <label for="first_name">First Name:</label>
+      <input class="w3-input w3-border" type="text" name="first_name" id="edit_student_firstname" placeholder="First Name" required value="{{ first_name }}">
+      <label for="last_name">Last Name:</label>
+      <input class="w3-input w3-border" type="text" name="last_name" id="edit_student_lastname" placeholder="Last Name" required value="{{ last_name }}">
+      <label for="course_code">Course Code:</label>
+      <select class="w3-input w3-border" name="course_code" id="edit_student_coursecode" required>
+        <option value="{{ course_code }}">{{ course_code }}</option>
+        {% for course in courses %}
+          <option value="{{ course.coursecode }}">{{ course.coursecode }}</option>
+        {% endfor %}
+      </select>
+      <label for="yearlevel">Year Level:</label>
+      <select class="w3-input w3-border" name="year_level" id="yearlevel" required>
+        <option value="" disabled selected>Year Level</option>
+        <option value="1" {% if year_level | string == '1' %}selected{% endif %}>1</option>
+        <option value="2" {% if year_level | string == '2' %}selected{% endif %}>2</option>
+        <option value="3" {% if year_level | string == '3' %}selected{% endif %}>3</option>
+        <option value="4" {% if year_level | string == '4' %}selected{% endif %}>4</option>
+      </select>
+      <label for="gender">Gender:</label>
+      <select class="w3-input w3-border" name="gender" id="gender" required>
+        <option value="" disabled selected>Gender</option>
+        <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
+        <option value="Female" {% if gender == 'Feale' %}selected{% endif %}>Female</option>
+        <option value="Other" {% if gender == 'Other' %}selected{% endif %}>Other</option>
+      </select>
+      <button class="w3-button w3-black w3-section" type="submit">
+        <i class="fa fa-save"></i> Save Changes
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const fileButton = document.getElementById('file-button');
+    const imagePreview = document.getElementById('student_info_image');
+    const imageUrlInput = document.getElementById('image_url');
+    const imagePreviewContainer = document.getElementById('student_image_container')
+    const maxSize = 1024 * 1024; // 1MB
+
+    fileButton.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async () => {
+        try {
+            const selectedFile = fileInput.files[0];
+
+            // Check file size
+            if (selectedFile.size > maxSize) {
+                alert('File size exceeds 1MB. Please choose a smaller file.');
+                return;
+            }
+
+            // Check file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(selectedFile.type)) {
+                alert('Invalid file type. Please choose a JPG, JPEG, or PNG file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            formData.append("csrf_token", "{{csrf_token()}}");
+
+            const response = await fetch("{{url_for('students.upload_to_cloudinary')}}", {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data && data.is_success) {
+                const img = document.createElement("img");
+                img.id = 'student_info_image';
+                img.alt = "New Image Photo";
+                img.src = data.url;
+
+                imagePreviewContainer.innerHTML = '';
+                imagePreviewContainer.appendChild(img);
+
+                imageUrlInput.value = data.url;
+            } else {
+                console.error("Upload failed:", data);
+            }
+        } catch (error) {
+            console.error("An error occurred:", error);
+        }
+    });
+</script>
+{% endblock %}

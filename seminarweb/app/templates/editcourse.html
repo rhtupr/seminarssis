@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+    <!-- Edit Course Form -->
+    <div class="w3-container w3-padding-32" id="edit_course_form">
+        <h3 class="w3-border-bottom w3-border-light-grey w3-padding-16">Edit Course Information</h3>
+        <form method="POST" action="/courses/edit">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="course_code" value="{{ course_code }}">
+            <label for="course_name">Course Name:</label>
+            <input class="w3-input w3-border" type="text" name="course_name" id="edit_course_coursename" placeholder="Course Name" required value="{{ course_name }}">
+            <label for="college_code">College Code:</label>
+            <select class="w3-input w3-border" name="college_code" id="edit_course_collegecode" required>
+                <option value="{{ college_code }}">{{ college_code }}</option>
+                {% for college in colleges %}
+                    <option value="{{ college.collegecode }}">{{ college.collegecode }}</option>
+                {% endfor %}
+            </select>
+            <button class="w3-button w3-black w3-section" type="submit">
+                <i class="fa fa-save"></i> Save Changes
+            </button>
+        </form>
+    </div>
+{% endblock %}
